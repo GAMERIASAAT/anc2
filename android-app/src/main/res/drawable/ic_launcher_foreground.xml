@@ -1,24 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- AncKit launcher icon foreground — terminal prompt symbol -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Terminal prompt ">" symbol -->
+    
     <path
-        android:fillColor="#58A6FF"
+        android:fillColor="#00000000"
         android:pathData="M30,38 L54,54 L30,70"
         android:strokeColor="#58A6FF"
         android:strokeWidth="6"
         android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:fillAlpha="0" />
-    <!-- Underscore cursor -->
-    <rect
+        android:strokeLineJoin="round" />
+        
+    <path
         android:fillColor="#3FB950"
-        android:left="58"
-        android:top="65"
-        android:right="80"
-        android:bottom="71" />
+        android:pathData="M58,65 h22 v6 h-22 z" />
 </vector>
