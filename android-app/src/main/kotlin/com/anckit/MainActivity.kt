@@ -1,6 +1,5 @@
 package com.anckit
 
-import org.koin.androidx.viewmodel.ext.android.viewModel
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,7 +8,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.ui.graphics.Color
-import androidx.lifecycle.viewmodel.compose.viewModel
+import org.koin.androidx.compose.koinViewModel
 import anc.ui.android.AncKitNavGraph
 import anc.ui.android.viewmodel.FrameworkViewModel
 
@@ -36,7 +35,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MaterialTheme(colorScheme = AncKitDarkColors) {
-                val viewModel: FrameworkViewModel = viewModel()
+                // Change viewModel() to koinViewModel()
+                val viewModel: FrameworkViewModel = koinViewModel()
                 AncKitNavGraph(viewModel = viewModel)
             }
         }
