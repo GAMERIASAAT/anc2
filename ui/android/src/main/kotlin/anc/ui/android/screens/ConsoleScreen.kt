@@ -96,7 +96,7 @@ fun ConsoleScreen(viewModel: FrameworkViewModel) {
             )
         }
 
-        Divider(color = Color(0xFF30363D))
+        HorizontalDivider(color = Color(0xFF30363D))
 
         // Input row
         Row(

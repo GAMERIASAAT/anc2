@@ -1,13 +1,14 @@
 package anc.ui.android
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.foundation.layout.padding
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -19,9 +20,9 @@ import anc.ui.android.screens.SessionsScreen
 import anc.ui.android.viewmodel.FrameworkViewModel
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
-    object Console : Screen("console", "Console", Icons.Outlined.Terminal)
+    object Console : Screen("console", "Console", Icons.Default.PlayArrow)
     object Modules : Screen("modules", "Modules", Icons.Default.Search)
-    object Sessions : Screen("sessions", "Sessions", Icons.Default.Share)
+    object Sessions : Screen("sessions", "Sessions", Icons.Default.Person)
 
     companion object {
         val all = listOf(Console, Modules, Sessions)
@@ -37,7 +38,8 @@ fun AncKitNavGraph(viewModel: FrameworkViewModel) {
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Console.route
+            startDestination = Screen.Console.route,
+            modifier = Modifier.padding(padding)
         ) {
             composable(Screen.Console.route) {
                 ConsoleScreen(viewModel)

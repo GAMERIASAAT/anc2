@@ -46,6 +46,9 @@ class TcpSocket private constructor(private val socket: Socket) {
     fun close() = runCatching { socket.close() }
 
     companion object {
+        /** Wrap an already-connected [java.net.Socket] in a [TcpSocket]. */
+        fun wrap(socket: Socket): TcpSocket = TcpSocket(socket)
+
         suspend fun connect(host: String, port: Int, timeoutMs: Int = 10_000): TcpSocket =
             withContext(Dispatchers.IO) {
                 val socket = Socket()

@@ -34,10 +34,7 @@ class ReverseHandler(
                     val client = ss.accept()
                     val remote = "${client.inetAddress.hostAddress}:${client.port}"
                     Logging.i("Incoming connection from $remote")
-                    val tcpSocket = rex.socket.TcpSocket::class.java
-                        .getDeclaredConstructor(java.net.Socket::class.java)
-                        .apply { isAccessible = true }
-                        .newInstance(client)
+                    val tcpSocket = rex.socket.TcpSocket.wrap(client)
                     val session: Session = when (sessionType) {
                         SessionType.SHELL   -> ShellSession(tcpSocket, remote)
                         SessionType.PHANTOM -> anc.core.session.PhantomSession(tcpSocket, remote)

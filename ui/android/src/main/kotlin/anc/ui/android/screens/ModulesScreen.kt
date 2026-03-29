@@ -153,7 +153,7 @@ private fun ModuleItem(meta: ModuleMetadata, onClick: () -> Unit) {
             fontFamily = FontFamily.Monospace
         )
     }
-    Divider(color = Color(0xFF21262D), thickness = 0.5.dp)
+    HorizontalDivider(color = Color(0xFF21262D), thickness = 0.5.dp)
 }
 
 private fun rankColor(rank: String): Color = when (rank) {
