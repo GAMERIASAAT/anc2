@@ -18,6 +18,11 @@ dependencies {
     implementation(libs.kotlin.stdlib)
     implementation(libs.coroutines.core)
     implementation(libs.serialization.json)
+
+    testImplementation(libs.kotest.runner)
+    testImplementation(libs.kotest.assertions)
+    testImplementation(libs.mockk)
+    testImplementation(libs.coroutines.core)
 }
 
 tasks.test {

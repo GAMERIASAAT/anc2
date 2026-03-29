@@ -18,6 +18,9 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.bouncy.castle)
     implementation(libs.serialization.json)
+
+    testImplementation(libs.kotest.runner)
+    testImplementation(libs.kotest.assertions)
 }
 
 tasks.test {

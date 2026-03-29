@@ -24,7 +24,11 @@ class App : Application() {
         }
 
         // Initialize the framework with all built-in modules
-        Framework.initialize(ModuleRegistry.all)
-        Logging.i("AncKit started — ${Framework.getInstance().moduleManager.count} modules ready")
+        try {
+            Framework.initialize(ModuleRegistry.all)
+            Logging.i("AncKit started — ${Framework.getInstance().moduleManager.count} modules ready")
+        } catch (e: Exception) {
+            Logging.e("Framework initialization failed: ${e.message}", e)
+        }
     }
 }

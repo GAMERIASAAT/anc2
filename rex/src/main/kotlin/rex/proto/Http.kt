@@ -42,7 +42,7 @@ object Http {
             Response(
                 code = resp.code,
                 body = resp.body?.string() ?: "",
-                headers = resp.headers.toMap()
+                headers = resp.headers.toMultimap().mapValues { (_, v) -> v.first() }
             )
         }
     }
@@ -63,7 +63,7 @@ object Http {
             Response(
                 code = resp.code,
                 body = resp.body?.string() ?: "",
-                headers = resp.headers.toMap()
+                headers = resp.headers.toMultimap().mapValues { (_, v) -> v.first() }
             )
         }
     }

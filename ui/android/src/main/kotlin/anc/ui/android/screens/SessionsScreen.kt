@@ -1,5 +1,6 @@
 package anc.ui.android.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -79,7 +80,7 @@ private fun SessionCard(session: Session, onClose: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF161B22)),
-        border = ButtonDefaults.outlinedButtonBorder
+        border = BorderStroke(1.dp, Color(0xFF30363D))
     ) {
         Row(
             modifier = Modifier

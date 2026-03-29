@@ -28,7 +28,7 @@ object Hex {
             val offset = "%08x".format(idx * bytesPerLine)
             val hex = chunk.joinToString(" ") { "%02x".format(it.toInt() and 0xFF) }
                 .padEnd(bytesPerLine * 3 - 1)
-            val ascii = chunk.map { if (it in 0x20..0x7e) it.toInt().toChar() else '.' }
+            val ascii = chunk.map { if (it.toInt() and 0xFF in 0x20..0x7e) it.toInt().toChar() else '.' }
                 .joinToString("")
             sb.appendLine("$offset  $hex  |$ascii|")
         }
