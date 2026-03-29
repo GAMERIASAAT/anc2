@@ -1,0 +1,81 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Grant execute permission for gradlew (if present)
+        run: chmod +x gradlew 2>/dev/null || true
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Build release APK
+        run: gradle :android-app:assembleRelease
+
+      - name: Sign APK
+        uses: r0adkll/sign-android-release@v1
+        id: sign_apk
+        with:
+          releaseDirectory: android-app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.SIGNING_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        env:
+          BUILD_TOOLS_VERSION: "35.0.0"
+        # If signing secrets are not set, fall back to unsigned release APK
+        continue-on-error: true
+
+      - name: Rename APK
+        run: |
+          APK_DIR="android-app/build/outputs/apk/release"
+          if ls "$APK_DIR"/*-signed.apk 1>/dev/null 2>&1; then
+            cp "$APK_DIR"/*-signed.apk "anckit-${{ steps.version.outputs.VERSION }}.apk"
+          else
+            cp "$APK_DIR"/android-app-release-unsigned.apk "anckit-${{ steps.version.outputs.VERSION }}.apk"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: AncKit ${{ steps.version.outputs.VERSION }}
+          body: |
+            ## AncKit ${{ steps.version.outputs.VERSION }}
+
+            ### Installation
+            1. Download `anckit-${{ steps.version.outputs.VERSION }}.apk`
+            2. On your Android device, enable **Settings → Security → Install unknown apps**
+            3. Open the downloaded APK and install
+
+            ### Requirements
+            - Android 8.0+ (API 26)
+
+            ### Changes
+            See [PLAN.md](PLAN.md) for architecture details.
+          files: anckit-${{ steps.version.outputs.VERSION }}.apk
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.VERSION, '-') }}
