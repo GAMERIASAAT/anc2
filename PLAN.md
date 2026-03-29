@@ -1,22 +1,22 @@
-# MetasploitKt — Kotlin Replica of Metasploit Framework (Android-First)
+# AncKit — Kotlin Security Framework (Android-First)
 
 ## Overview
 
-MetasploitKt is a full Kotlin port of the Metasploit Framework, designed to run natively on Android
-and the JVM. It mirrors Metasploit's proven architecture while leveraging Kotlin idioms: coroutines
-for concurrency, sealed classes for module hierarchies, interfaces with default methods as mixin
-replacements, and the Kotlin multiplatform toolchain for cross-platform support.
+AncKit is a full Kotlin security framework inspired by the architecture of open-source penetration
+testing frameworks, designed to run natively on Android and the JVM. It leverages Kotlin idioms:
+coroutines for concurrency, sealed classes for module hierarchies, interfaces with default methods
+as mixin replacements, and the Kotlin multiplatform toolchain for cross-platform support.
 
 ---
 
 ## Goals
 
-1. Exact structural parity with `rapid7/metasploit-framework`
+1. Structural parity with open-source security framework conventions (inspired by `rapid7/metasploit-framework`)
 2. Android-first: every component must work on Android API 26+ (no `java.*` APIs unavailable on Android)
 3. Statically-typed equivalent of Ruby's mixin/dynamic module system
 4. Full module lifecycle: discover → load → configure → run → session
-5. Meterpreter-compatible session layer (binary protocol reuse)
-6. REST/RPC API compatible with the existing Metasploit RPC spec
+5. Custom Phantom agent session layer with TLV binary protocol
+6. REST/RPC API with a clean, framework-agnostic spec
 
 ---
 
@@ -42,18 +42,18 @@ replacements, and the Kotlin multiplatform toolchain for cross-platform support.
 
 ## Project Directory Structure
 
-Mirrors Metasploit's layout as closely as possible, adapted for a Gradle multi-module Kotlin project.
+Follows proven security framework conventions, adapted for a Gradle multi-module Kotlin project.
 
 ```
-metasploit-kt/
+anckit/
 ├── build.gradle.kts                  # Root build script
 ├── settings.gradle.kts               # Module declarations
 ├── gradle/
 │   └── libs.versions.toml            # Version catalog
 │
-├── core/                             # ≈ lib/rex/ + lib/msf/core/
+├── core/                             # ≈ lib/rex/ + framework core
 │   └── src/
-│       ├── commonMain/kotlin/msf/core/
+│       ├── commonMain/kotlin/anc/core/
 │       │   ├── Framework.kt          # Framework singleton / DI root
 │       │   ├── Module.kt             # Abstract base for all modules
 │       │   ├── ModuleManager.kt      # Discovery, loading, caching
@@ -88,13 +88,13 @@ metasploit-kt/
 │       │   └── session/
 │       │       ├── Session.kt        # Abstract Session
 │       │       ├── ShellSession.kt   # Shell session
-│       │       ├── MeterpreterSession.kt
+│       │       ├── PhantomSession.kt # Phantom agent session (TLV protocol)
 │       │       └── handler/
 │       │           ├── Handler.kt    # Payload handler interface
 │       │           ├── ReverseHandler.kt
 │       │           └── BindHandler.kt
 │
-├── rex/                              # ≈ lib/rex/  (low-level toolkit)
+├── rex/                              # Low-level toolkit (sockets, crypto, protocols)
 │   └── src/commonMain/kotlin/rex/
 │       ├── arch/                     # Architecture constants (x86, x64, ARM, ARM64, MIPS)
 │       ├── crypto/
@@ -121,8 +121,8 @@ metasploit-kt/
 │       ├── java/                     # JVM-only overrides (java.net)
 │       └── android/                  # Android-only overrides
 │
-├── base/                             # ≈ lib/msf/base/
-│   └── src/commonMain/kotlin/msf/base/
+├── base/                             # Base wrappers and simplified interfaces
+│   └── src/commonMain/kotlin/anc/base/
 │       ├── Config.kt                 # Framework-wide config
 │       ├── Logging.kt                # Logging facade (Timber on Android)
 │       ├── PersistentStorage.kt      # Storage interface
@@ -130,7 +130,7 @@ metasploit-kt/
 │       │   └── JsonSerializer.kt
 │       └── sessions/
 │           ├── DefaultShell.kt
-│           └── DefaultMeterpreter.kt
+│           └── DefaultPhantom.kt     # Default Phantom agent session
 │
 ├── modules/                          # ≈ modules/  (actual exploit/aux/etc content)
 │   ├── exploits/
@@ -161,7 +161,7 @@ metasploit-kt/
 │   │   │   ├── linux/
 │   │   │   └── windows/
 │   │   └── stages/
-│   │       └── meterpreter/
+│   │       └── phantom/              # Phantom agent stage (custom TLV agent)
 │   ├── encoders/
 │   │   ├── x86/
 │   │   ├── x64/
@@ -175,13 +175,13 @@ metasploit-kt/
 │   │   └── windows/
 │   └── evasion/
 │
-├── plugins/                          # ≈ plugins/  (runtime plugin extensions)
-│   └── src/main/kotlin/msf/plugins/
+├── plugins/                          # Runtime plugin extensions
+│   └── src/main/kotlin/anc/plugins/
 │       └── PluginBase.kt
 │
-├── ui/                               # ≈ lib/msf/ui/
-│   ├── console/                      # JVM CLI console (msfconsole equivalent)
-│   │   └── src/main/kotlin/msf/ui/console/
+├── ui/                               # User interface layer
+│   ├── console/                      # JVM CLI console (ancconsole)
+│   │   └── src/main/kotlin/anc/ui/console/
 │   │       ├── Console.kt
 │   │       ├── CommandDispatcher.kt
 │   │       ├── commands/
@@ -193,7 +193,7 @@ metasploit-kt/
 │   │       │   └── Info.kt
 │   │       └── Shell.kt              # Interactive REPL
 │   └── android/                      # Android UI (Jetpack Compose)
-│       └── src/main/kotlin/msf/ui/android/
+│       └── src/main/kotlin/anc/ui/android/
 │           ├── MainActivity.kt
 │           ├── screens/
 │           │   ├── ConsoleScreen.kt
@@ -202,8 +202,8 @@ metasploit-kt/
 │           └── viewmodel/
 │               └── FrameworkViewModel.kt
 │
-├── app/                              # ≈ app/ models / validators
-│   └── src/main/kotlin/msf/app/
+├── app/                              # Data models and validators
+│   └── src/main/kotlin/anc/app/
 │       ├── models/
 │       │   ├── Host.kt
 │       │   ├── Service.kt
@@ -217,8 +217,8 @@ metasploit-kt/
 │   ├── migrations/
 │   └── schema.sql
 │
-├── webservices/                      # ≈ lib/msf/core/web_services/
-│   └── src/main/kotlin/msf/web/
+├── webservices/                      # RPC / REST API server
+│   └── src/main/kotlin/anc/web/
 │       ├── RpcServer.kt              # JSON-RPC compatible server
 │       ├── RestApi.kt                # REST API (Ktor routes)
 │       └── auth/
@@ -232,8 +232,8 @@ metasploit-kt/
 │       └── evasion/
 │
 ├── tools/                            # ≈ tools/  (CLI utilities)
-│   ├── msfvenom-kt/                  # Payload generator CLI
-│   └── msf-pattern/                  # Cyclic pattern tool
+│   ├── ancvenom/                     # Payload generator CLI
+│   └── anc-pattern/                  # Cyclic pattern tool
 │
 ├── scripts/                          # Helper scripts
 │   ├── setup.sh
@@ -247,7 +247,7 @@ metasploit-kt/
 │
 └── android-app/                      # Standalone Android APK entry point
     ├── src/main/
-    │   ├── kotlin/com/metasploitkt/
+    │   ├── kotlin/com/anckit/
     │   │   └── App.kt
     │   └── AndroidManifest.xml
     └── build.gradle.kts
@@ -268,7 +268,7 @@ metasploit-kt/
 | Implement Framework singleton | `core/Framework.kt` | Koin DI root |
 | Implement EventBus | `core/EventBus.kt` | Kotlin Flow-based |
 | Build ModuleManager skeleton | `core/ModuleManager.kt` | ServiceLoader on JVM, reflection on Android |
-| Create base Exploit/Auxiliary/Post/Payload/Encoder/Nop abstract classes | `core/exploit/`, `core/auxiliary/` etc. | Mirrors MSF class tree |
+| Create base Exploit/Auxiliary/Post/Payload/Encoder/Nop abstract classes | `core/exploit/`, `core/auxiliary/` etc. | Mirrors open framework class tree |
 | Implement Logging facade | `base/Logging.kt` | Timber on Android, SLF4J on JVM |
 | Setup Room (Android) + Exposed (JVM) | `db/` | Shared `DbManager` interface |
 | Write unit tests for Framework, Options, Datastore | `core/src/test/` | Kotest |
@@ -308,21 +308,21 @@ metasploit-kt/
 | First Android payload: reverse shell | `modules/payloads/singles/android/ReverseShell.kt` | |
 | First Linux payload: reverse shell | `modules/payloads/singles/linux/ReverseShellX86.kt` | |
 | Payload handlers | `core/session/handler/` | Reverse TCP, Bind TCP |
-| msfvenom-kt CLI | `tools/msfvenom-kt/` | Clikt-based |
+| ancvenom CLI | `tools/ancvenom/` | Clikt-based |
 
-**Deliverable:** `msfvenom-kt -p android/shell/reverse_tcp LHOST=x LPORT=4444 -f raw` produces binary.
+**Deliverable:** `ancvenom -p android/shell/reverse_tcp LHOST=x LPORT=4444 -f raw` produces binary.
 
 ---
 
 ### Phase 4 — Session & Post-Exploitation (Weeks 11–13)
 
-**Goal:** Working shell and Meterpreter sessions post-exploitation.
+**Goal:** Working shell and Phantom agent sessions post-exploitation.
 
 | Task | Files | Notes |
 |------|-------|-------|
 | Session base + lifecycle | `core/session/Session.kt` | Open/close/interact |
 | ShellSession | `core/session/ShellSession.kt` | Bi-directional pipe |
-| MeterpreterSession | `core/session/MeterpreterSession.kt` | TLV protocol parser |
+| PhantomSession | `core/session/PhantomSession.kt` | Custom TLV protocol parser |
 | SessionManager | `core/SessionManager.kt` | Background session list |
 | Post module base | `core/post/Post.kt` | Runs in session context |
 | First Android post module: device info | `modules/post/android/GatherDeviceInfo.kt` | |
@@ -351,7 +351,7 @@ metasploit-kt/
 
 ### Phase 6 — Console UI (Weeks 19–21)
 
-**Goal:** `msfconsole` equivalent for JVM; Compose UI for Android.
+**Goal:** `ancconsole` interactive terminal for JVM; Compose UI for Android.
 
 #### JVM Console
 | Task | Files |
@@ -390,11 +390,11 @@ metasploit-kt/
 
 ### Phase 8 — Web Services & RPC (Weeks 24–25)
 
-**Goal:** Ktor-based RPC/REST server compatible with Metasploit RPC spec.
+**Goal:** Ktor-based RPC/REST server with a clean, self-contained API spec.
 
 | Task | Files | Notes |
 |------|-------|-------|
-| JSON-RPC server | `webservices/RpcServer.kt` | Mirrors MSF RPC API |
+| JSON-RPC server | `webservices/RpcServer.kt` | AncKit RPC API |
 | REST API routes | `webservices/RestApi.kt` | Hosts, sessions, modules CRUD |
 | Token authentication | `webservices/auth/TokenAuth.kt` | |
 | WebSocket for live console | `webservices/ConsoleSocket.kt` | |
@@ -403,7 +403,7 @@ metasploit-kt/
 
 ### Phase 9 — Plugin System (Week 26)
 
-**Goal:** Runtime plugin loading (mirrors Metasploit plugins/).
+**Goal:** Runtime plugin loading for extending framework capabilities.
 
 | Task | Files | Notes |
 |------|-------|-------|
@@ -430,7 +430,7 @@ metasploit-kt/
 
 ### 1. Mixins → Interfaces with Default Methods
 
-Ruby uses `include Msf::Exploit::Remote`. Kotlin uses interfaces:
+Ruby uses `include Anc::Exploit::Remote`. Kotlin uses interfaces:
 
 ```kotlin
 // core/exploit/Remote.kt
@@ -460,7 +460,7 @@ class ModuleManager(private val framework: Framework) {
     private val cache = ConcurrentHashMap<String, ModuleMetadata>()
 
     fun loadModules(paths: List<Path>) {
-        ServiceLoader.load(MsfModule::class.java).forEach { module ->
+        ServiceLoader.load(AncModule::class.java).forEach { module ->
             cache[module.fullName] = ModuleMetadata.from(module)
         }
     }
@@ -515,14 +515,14 @@ sealed class Payload {
 Android payloads must use:
 - `android.net.LocalSocket` or `java.net.Socket` (available API 26+)
 - No `Runtime.exec()` for shell — use `ProcessBuilder` with `/system/bin/sh`
-- Meterpreter Android stage: existing `.jar` / `.dex` can be reused from MSF
+- Phantom agent Android stage: compiled to `.dex` and loaded via `DexClassLoader`
 - Permissions declared in `AndroidManifest.xml` (INTERNET minimum)
 
 ---
 
 ## Module Metadata Format
 
-Every module defines metadata via a companion object (mirrors MSF's `def initialize`):
+Every module defines metadata via a companion object (mirrors the Ruby framework's `def initialize` pattern):
 
 ```kotlin
 class EternalBlue : Exploit(), Remote {
@@ -555,7 +555,7 @@ class EternalBlue : Exploit(), Remote {
 The standalone Android APK wires up the framework with an Android-aware DI config:
 
 ```kotlin
-// android-app/src/main/kotlin/com/metasploitkt/App.kt
+// android-app/src/main/kotlin/com/anckit/App.kt
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
@@ -582,7 +582,7 @@ An annotation processor generates:
 ```kotlin
 // generated/ModuleRegistry.kt
 object ModuleRegistry {
-    val all: List<KClass<out MsfModule>> = listOf(
+    val all: List<KClass<out AncModule>> = listOf(
         ExampleAndroidExploit::class,
         PortScanner::class,
         // ...
@@ -609,11 +609,11 @@ object ModuleRegistry {
 
 | Artifact | Output |
 |----------|--------|
-| `msfconsole-kt` | JVM fat JAR — interactive console |
-| `msfvenom-kt` | JVM fat JAR — payload generator CLI |
-| `metasploit-kt.apk` | Android APK — full framework on Android |
+| `ancconsole` | JVM fat JAR — interactive console |
+| `ancvenom` | JVM fat JAR — payload generator CLI |
+| `anckit.apk` | Android APK — full framework on Android |
 | `core.aar` | Android library for embedding in other apps |
-| Docker image | `ghcr.io/metasploit-kt:latest` |
+| Docker image | `ghcr.io/anckit:latest` |
 
 ---
 
