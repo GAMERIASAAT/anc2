@@ -1,5 +1,6 @@
 package com.anckit
 
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
