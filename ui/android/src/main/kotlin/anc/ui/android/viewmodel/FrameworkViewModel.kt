@@ -8,6 +8,7 @@ import anc.core.Framework
 import anc.core.ModuleManager
 import anc.core.ModuleMetadata
 import anc.core.ModuleType
+import anc.core.Option
 import anc.core.session.Session
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Base64
 
 data class UiState(
     val consoleLines: List<ConsoleLine> = emptyList(),
@@ -32,15 +34,33 @@ data class ConsoleLine(
 
 enum class LineType { INPUT, OUTPUT, GOOD, BAD, STATUS, WARNING, ERROR }
 
+data class VenomState(
+    val payloads: List<ModuleMetadata> = emptyList(),
+    val encoders: List<ModuleMetadata> = emptyList(),
+    val selectedPayload: String = "",
+    val payloadOptions: List<Option<*>> = emptyList(),
+    val optionValues: Map<String, String> = emptyMap(),
+    val format: String = "hex",
+    val selectedEncoder: String = "",
+    val output: String = "",
+    val outputSize: Int = 0,
+    val isGenerating: Boolean = false,
+    val error: String? = null
+)
+
 class FrameworkViewModel : ViewModel() {
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
+
+    private val _venomState = MutableStateFlow(VenomState())
+    val venomState: StateFlow<VenomState> = _venomState.asStateFlow()
 
     private val framework: Framework get() = Framework.getInstance()
 
     init {
         observeEvents()
         refreshModules()
+        refreshVenomLists()
     }
 
     private fun observeEvents() {
@@ -258,5 +278,99 @@ class FrameworkViewModel : ViewModel() {
 
     fun updateSearch(query: String) {
         _state.update { it.copy(searchQuery = query) }
+    }
+
+    // ── Venom (payload generator) ─────────────────────────────────────────────
+
+    private fun refreshVenomLists() {
+        _venomState.update {
+            it.copy(
+                payloads = framework.payloadManager.all(),
+                encoders = framework.encoderManager.all()
+            )
+        }
+    }
+
+    fun selectVenomPayload(path: String) {
+        val payload = framework.payloadManager.create(path) ?: return
+        payload.datastore.applyDefaults(payload.options)
+        val opts = payload.options.all()
+        val defaults = opts.associate { opt ->
+            opt.name to (payload.datastore[opt.name]?.toString() ?: opt.default?.toString() ?: "")
+        }
+        _venomState.update {
+            it.copy(
+                selectedPayload = path,
+                payloadOptions = opts,
+                optionValues = defaults,
+                output = "",
+                outputSize = 0,
+                error = null
+            )
+        }
+    }
+
+    fun setVenomOption(key: String, value: String) {
+        _venomState.update { it.copy(optionValues = it.optionValues + (key to value)) }
+    }
+
+    fun setVenomFormat(format: String) {
+        _venomState.update { it.copy(format = format) }
+    }
+
+    fun setVenomEncoder(path: String) {
+        _venomState.update { it.copy(selectedEncoder = path) }
+    }
+
+    fun generateVenomPayload() {
+        val vs = _venomState.value
+        if (vs.selectedPayload.isEmpty()) return
+        _venomState.update { it.copy(isGenerating = true, error = null) }
+        viewModelScope.launch(Dispatchers.Default) {
+            try {
+                val payload = framework.payloadManager.create(vs.selectedPayload)
+                    ?: throw IllegalArgumentException("Payload not found: ${vs.selectedPayload}")
+                vs.optionValues.forEach { (k, v) -> if (v.isNotEmpty()) payload.datastore[k] = v }
+                val errors = payload.options.validate(payload.datastore)
+                if (errors.isNotEmpty()) {
+                    _venomState.update { it.copy(isGenerating = false, error = errors.joinToString("; ")) }
+                    return@launch
+                }
+                var raw = payload.generate()
+                if (vs.selectedEncoder.isNotEmpty()) {
+                    raw = framework.encoderManager.encode(raw, vs.selectedEncoder)
+                }
+                _venomState.update {
+                    it.copy(
+                        isGenerating = false,
+                        output = formatVenomBytes(raw, vs.format),
+                        outputSize = raw.size,
+                        error = null
+                    )
+                }
+            } catch (e: Exception) {
+                _venomState.update { it.copy(isGenerating = false, error = e.message ?: "Unknown error") }
+            }
+        }
+    }
+
+    private fun formatVenomBytes(bytes: ByteArray, fmt: String): String {
+        val list = bytes.toList()
+        return when (fmt) {
+            "hex"    -> bytes.joinToString("") { "%02x".format(it) }
+            "c"      -> list.chunked(16).joinToString("\n") { line ->
+                            line.joinToString(", ", "\"", "\"") { "\\x%02x".format(it.toInt() and 0xff) }
+                        }
+            "python" -> "shellcode = (\n" +
+                        list.chunked(16).joinToString("\n") { line ->
+                            "    b\"" + line.joinToString("") { "\\x%02x".format(it.toInt() and 0xff) } + "\""
+                        } + "\n)"
+            "base64" -> Base64.getEncoder().encodeToString(bytes)
+            "kotlin" -> "val shellcode = byteArrayOf(\n" +
+                        list.chunked(12).joinToString(",\n") { line ->
+                            "    " + line.joinToString(", ") { "0x%02x".format(it.toInt() and 0xff) }
+                        } + "\n)"
+            else     -> bytes.joinToString("") { "%02x".format(it) }
+        }
     }
 }

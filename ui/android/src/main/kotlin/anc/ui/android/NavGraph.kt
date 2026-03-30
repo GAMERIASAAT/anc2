@@ -1,6 +1,7 @@
 package anc.ui.android
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
@@ -17,15 +18,17 @@ import androidx.navigation.compose.rememberNavController
 import anc.ui.android.screens.ConsoleScreen
 import anc.ui.android.screens.ModulesScreen
 import anc.ui.android.screens.SessionsScreen
+import anc.ui.android.screens.VenomScreen
 import anc.ui.android.viewmodel.FrameworkViewModel
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
-    object Console : Screen("console", "Console", Icons.Default.PlayArrow)
-    object Modules : Screen("modules", "Modules", Icons.Default.Search)
+    object Console  : Screen("console",  "Console",  Icons.Default.PlayArrow)
+    object Modules  : Screen("modules",  "Modules",  Icons.Default.Search)
     object Sessions : Screen("sessions", "Sessions", Icons.Default.Person)
+    object Venom    : Screen("venom",    "Venom",    Icons.Default.Code)
 
     companion object {
-        val all = listOf(Console, Modules, Sessions)
+        val all = listOf(Console, Modules, Sessions, Venom)
     }
 }
 
@@ -54,6 +57,9 @@ fun AncKitNavGraph(viewModel: FrameworkViewModel) {
             }
             composable(Screen.Sessions.route) {
                 SessionsScreen(viewModel)
+            }
+            composable(Screen.Venom.route) {
+                VenomScreen(viewModel)
             }
         }
     }
