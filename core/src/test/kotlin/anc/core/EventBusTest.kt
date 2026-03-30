@@ -3,8 +3,11 @@ package anc.core
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 
 class EventBusTest : FunSpec({
@@ -13,12 +16,13 @@ class EventBusTest : FunSpec({
         val bus = EventBus()
         val received = mutableListOf<EventBus.Event>()
 
-        val job = kotlinx.coroutines.GlobalScope.launch {
+        val job = launch {
             bus.events.collect { received.add(it) }
         }
 
+        delay(10) // let collector subscribe before emitting
         bus.tryEmit(EventBus.Event.ConsoleOutput("hello"))
-        kotlinx.coroutines.delay(50)
+        delay(50)
         job.cancel()
 
         received.any { it is EventBus.Event.ConsoleOutput && (it as EventBus.Event.ConsoleOutput).line == "hello" } shouldBe true
@@ -27,13 +31,13 @@ class EventBusTest : FunSpec({
     test("emit and first collect FrameworkStatus event") {
         val bus = EventBus()
 
-        val result = withTimeout(1000) {
-            val deferred = kotlinx.coroutines.GlobalScope.async {
+        val result = runBlocking {
+            val deferred = async {
                 bus.events.first { it is EventBus.Event.FrameworkStatus }
             }
-            kotlinx.coroutines.delay(10)
+            delay(10)
             bus.emit(EventBus.Event.FrameworkStatus("ready"))
-            deferred.await()
+            withTimeout(1000L) { deferred.await() }
         }
 
         result.shouldBeInstanceOf<EventBus.Event.FrameworkStatus>()

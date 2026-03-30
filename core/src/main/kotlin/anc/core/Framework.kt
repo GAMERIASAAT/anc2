@@ -13,6 +13,8 @@ class Framework private constructor() {
     val eventBus = EventBus()
     val moduleManager = ModuleManager(this)
     val sessionManager = SessionManager(this)
+    val payloadManager = PayloadManager(this)
+    val encoderManager = EncoderManager(this)
 
     /** Background scope for running modules and sessions. */
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -43,6 +45,6 @@ class Framework private constructor() {
         }
 
         /** For tests — reset the singleton. */
-        internal fun reset() { _instance = null }
+        fun reset() { _instance = null }
     }
 }

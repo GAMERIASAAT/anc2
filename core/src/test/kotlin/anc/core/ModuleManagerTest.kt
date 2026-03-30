@@ -25,6 +25,7 @@ class ModuleManagerTest : FunSpec({
         override val description = desc
         override val moduleType = type
         override val modulePath = path
+        override suspend fun run() {}
     }
 
     test("register increments count") {

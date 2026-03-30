@@ -13,11 +13,11 @@ data class Option<T : Any>(
 ) {
     @Suppress("UNCHECKED_CAST")
     fun coerce(raw: String): T = when (type) {
-        String::class.java  -> raw as T
-        Int::class.java     -> raw.toInt() as T
-        Long::class.java    -> raw.toLong() as T
-        Boolean::class.java -> raw.toBooleanStrict() as T
-        else                -> raw as T
+        String::class.java                               -> raw as T
+        Int::class.java, java.lang.Integer::class.java  -> raw.toInt() as T
+        Long::class.java, java.lang.Long::class.java    -> raw.toLong() as T
+        Boolean::class.java, java.lang.Boolean::class.java -> raw.toBooleanStrict() as T
+        else                                             -> raw as T
     }
 }
 

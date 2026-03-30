@@ -15,6 +15,7 @@ class FrameworkTest : FunSpec({
         override val description = "A fake module"
         override val moduleType = ModuleType.AUXILIARY
         override val modulePath = path
+        override suspend fun run() {}
     }
 
     test("getInstance throws before initialize") {
