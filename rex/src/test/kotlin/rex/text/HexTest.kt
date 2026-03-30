@@ -84,7 +84,7 @@ class HexTest : FunSpec({
     }
 
     test("dump contains offset") {
-        val result = Hex.dump(ByteArrayOf(0x41))
+        val result = Hex.dump(byteArrayOf(0x41))
         result shouldContain "00000000"
     }
 

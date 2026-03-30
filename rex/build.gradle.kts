@@ -17,6 +17,7 @@ dependencies {
     implementation(libs.coroutines.core)
     implementation(libs.okhttp)
     implementation(libs.bouncy.castle)
+    implementation(libs.sshj)
     implementation(libs.serialization.json)
 
     testImplementation(libs.kotest.runner)
